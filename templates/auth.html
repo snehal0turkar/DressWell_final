@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DressWell — Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body class="auth-body">
+
+<div class="auth-split">
+    <div class="auth-split__visual">
+        <div class="auth-split__grain"></div>
+        <a href="/" class="brand-logo brand-logo--light auth-brand">
+            <span class="brand-logo__icon">◈</span>
+            <span class="brand-logo__text">DressWell</span>
+        </a>
+        <div class="auth-quote">
+            <blockquote>"Fashion is the armor to survive everyday life."</blockquote>
+            <cite>— Bill Cunningham</cite>
+        </div>
+        <div class="auth-visual-circles">
+            <div class="vc vc--1"></div>
+            <div class="vc vc--2"></div>
+            <div class="vc vc--3"></div>
+        </div>
+    </div>
+
+    <div class="auth-split__form">
+        <div class="auth-form-container">
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert--{{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="auth-tabs">
+                <button class="auth-tab" id="tab-login" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
+                <div class="auth-tab-indicator" id="tab-indicator"></div>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="form-login" class="auth-form" method="POST" action="{{ url_for('auth') }}">
+                <input type="hidden" name="action" value="login">
+
+                <div class="form-group">
+                    <label class="form-label">Email address</label>
+                    <input type="email" name="email" class="form-input" placeholder="you@email.com" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrap">
+                        <input type="password" name="password" class="form-input" id="login-pass" placeholder="••••••••" required>
+                        <button type="button" class="input-eye" onclick="togglePass('login-pass')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary btn-full">Sign In →</button>
+
+                <p class="auth-switch">Don't have an account? <a href="#" onclick="switchTab('register')">Create one</a></p>
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form id="form-register" class="auth-form auth-form--hidden" method="POST" action="{{ url_for('auth') }}">
+                <input type="hidden" name="action" value="register">
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="username" class="form-input" placeholder="Your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" name="city" class="form-input" placeholder="Mumbai">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email address</label>
+                    <input type="email" name="email" class="form-input" placeholder="you@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <div class="gender-picker">
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="male">
+                            <span class="gender-btn">
+                                <span class="gender-icon">♂</span>
+                                Male
+                            </span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="female">
+                            <span class="gender-btn">
+                                <span class="gender-icon">♀</span>
+                                Female
+                            </span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="non_binary">
+                            <span class="gender-btn">
+                                <span class="gender-icon">⚬</span>
+                                Non-binary
+                            </span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="prefer_not_to_say" checked>
+                            <span class="gender-btn">
+                                <span class="gender-icon">—</span>
+                                Prefer not
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrap">
+                        <input type="password" name="password" class="form-input" id="reg-pass" placeholder="Min. 6 characters" required minlength="6">
+                        <button type="button" class="input-eye" onclick="togglePass('reg-pass')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                    <div class="password-strength" id="pw-strength">
+                        <div class="strength-bar" id="strength-bar"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary btn-full">Create Account →</button>
+
+                <p class="auth-switch">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></p>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+const initTab = '{{ tab }}';
+
+function switchTab(tab) {
+    const loginForm = document.getElementById('form-login');
+    const registerForm = document.getElementById('form-register');
+    const tabLogin = document.getElementById('tab-login');
+    const tabReg = document.getElementById('tab-register');
+    const indicator = document.getElementById('tab-indicator');
+
+    if (tab === 'login') {
+        loginForm.classList.remove('auth-form--hidden');
+        registerForm.classList.add('auth-form--hidden');
+        tabLogin.classList.add('auth-tab--active');
+        tabReg.classList.remove('auth-tab--active');
+        indicator.style.transform = 'translateX(0)';
+    } else {
+        loginForm.classList.add('auth-form--hidden');
+        registerForm.classList.remove('auth-form--hidden');
+        tabReg.classList.add('auth-tab--active');
+        tabLogin.classList.remove('auth-tab--active');
+        indicator.style.transform = 'translateX(100%)';
+    }
+}
+
+switchTab(initTab || 'login');
+
+// Password strength
+const pwInput = document.getElementById('reg-pass');
+const strengthBar = document.getElementById('strength-bar');
+pwInput.addEventListener('input', () => {
+    const val = pwInput.value;
+    let strength = 0;
+    if (val.length >= 6) strength++;
+    if (val.length >= 10) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/[0-9]/.test(val)) strength++;
+    if (/[^a-zA-Z0-9]/.test(val)) strength++;
+    const pct = (strength / 5) * 100;
+    const colors = ['#e74c3c','#e74c3c','#f39c12','#2ecc71','#27ae60','#1abc9c'];
+    strengthBar.style.width = pct + '%';
+    strengthBar.style.background = colors[strength] || colors[0];
+});
+
+function togglePass(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+}
+</script>
+</body>
+</html>

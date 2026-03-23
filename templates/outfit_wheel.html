@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Outfit Wheel — DressWell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Confused? Let fate decide</p>
+        <h1 class="page-title">Outfit Wheel</h1>
+    </div>
+</div>
+
+<div class="wheel-layout">
+    <!-- LEFT: Inputs -->
+    <div class="wheel-controls">
+        <p class="wheel-intro">Tell us a little about your day — we'll pick the perfect outfit from your wardrobe.</p>
+
+        <div class="form-group">
+            <label class="form-label">What's the occasion?</label>
+            <div class="occasion-grid">
+                {% for occ in [
+                    ('casual', '😎', 'Casual'),
+                    ('office', '💼', 'Office'),
+                    ('party', '🎉', 'Party'),
+                    ('date', '❤️', 'Date Night'),
+                    ('gym', '🏋️', 'Gym'),
+                    ('wedding', '💍', 'Wedding'),
+                    ('travel', '✈️', 'Travel'),
+                    ('beach', '🏖️', 'Beach'),
+                    ('traditional', '🪔', 'Traditional')
+                ] %}
+                <button type="button" class="occ-tile" data-occasion="{{ occ[0] }}" onclick="selectOccasion(this, '{{ occ[0] }}')">
+                    <span class="occ-tile__icon">{{ occ[1] }}</span>
+                    <span class="occ-tile__label">{{ occ[2] }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Preferred color? <span class="form-hint">(optional)</span></label>
+            <div class="color-picker-row">
+                {% for color in ['black','white','navy','grey','beige','red','blue','green','pink','yellow','brown','purple'] %}
+                <button type="button" class="color-tile" data-color="{{ color }}"
+                    style="background: {{ color }}" title="{{ color }}"
+                    onclick="selectColor(this, '{{ color }}')"></button>
+                {% endfor %}
+            </div>
+            <input type="text" id="colorInput" class="form-input" placeholder="Or type a color..." style="margin-top:10px">
+        </div>
+
+        <button class="btn-spin" id="spinBtn" onclick="spinWheel()">
+            <span class="spin-icon">◈</span>
+            <span>Spin the Wheel</span>
+        </button>
+    </div>
+
+    <!-- RIGHT: Wheel + Result -->
+    <div class="wheel-display">
+        <div class="wheel-canvas-wrap">
+            <canvas id="wheelCanvas" width="360" height="360"></canvas>
+            <div class="wheel-center-dot"></div>
+            <div class="wheel-pointer">▼</div>
+        </div>
+
+        <div class="wheel-result" id="wheelResult">
+            <div class="wheel-result__idle">
+                <p>Spin the wheel to get your outfit suggestion</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedOccasion = null;
+let selectedColor = null;
+let isSpinning = false;
+
+// Draw the wheel
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+const occasions = [
+    {label:'Casual',color:'#1a1a2e',icon:'😎'},
+    {label:'Office',color:'#16213e',icon:'💼'},
+    {label:'Party',color:'#0f3460',icon:'🎉'},
+    {label:'Date',color:'#1a1a2e',icon:'❤️'},
+    {label:'Gym',color:'#16213e',icon:'🏋️'},
+    {label:'Wedding',color:'#0f3460',icon:'💍'},
+    {label:'Travel',color:'#1a1a2e',icon:'✈️'},
+    {label:'Beach',color:'#16213e',icon:'🏖️'},
+    {label:'Trad.',color:'#0f3460',icon:'🪔'},
+];
+let wheelAngle = 0;
+
+function drawWheel(angle) {
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const r = cx - 10;
+    const slices = occasions.length;
+    const arc = (Math.PI * 2) / slices;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    occasions.forEach((occ, i) => {
+        const start = angle + i * arc - Math.PI / 2;
+        const end = start + arc;
+        
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, end);
+        ctx.closePath();
+        ctx.fillStyle = i % 2 === 0 ? '#1a1a2e' : '#111827';
+        ctx.fill();
+        ctx.strokeStyle = '#c9a84c';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Label
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + arc / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#c9a84c';
+        ctx.font = '500 12px "DM Sans", sans-serif';
+        ctx.fillText(occ.icon + ' ' + occ.label, r - 14, 4);
+        ctx.restore();
+    });
+    
+    // Center circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fill();
+    ctx.strokeStyle = '#c9a84c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#c9a84c';
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('◈', cx, cy + 7);
+}
+
+drawWheel(0);
+
+function selectOccasion(btn, occ) {
+    document.querySelectorAll('.occ-tile').forEach(b => b.classList.remove('occ-tile--active'));
+    btn.classList.add('occ-tile--active');
+    selectedOccasion = occ;
+}
+
+function selectColor(btn, color) {
+    document.querySelectorAll('.color-tile').forEach(b => b.classList.remove('color-tile--active'));
+    btn.classList.add('color-tile--active');
+    selectedColor = color;
+    document.getElementById('colorInput').value = color;
+}
+
+document.getElementById('colorInput').addEventListener('input', e => {
+    selectedColor = e.target.value;
+    document.querySelectorAll('.color-tile').forEach(b => b.classList.remove('color-tile--active'));
+});
+
+function spinWheel() {
+    if (isSpinning) return;
+    isSpinning = true;
+    
+    const btn = document.getElementById('spinBtn');
+    btn.classList.add('btn-spin--spinning');
+    
+    const extraSpins = (Math.random() * 5 + 8) * Math.PI * 2;
+    const targetAngle = wheelAngle + extraSpins;
+    const duration = 3500;
+    const startTime = performance.now();
+    const startAngle = wheelAngle;
+    
+    function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        wheelAngle = startAngle + (targetAngle - startAngle) * eased;
+        drawWheel(wheelAngle);
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            wheelAngle = targetAngle % (Math.PI * 2);
+            btn.classList.remove('btn-spin--spinning');
+            isSpinning = false;
+            fetchSuggestion();
+        }
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+async function fetchSuggestion() {
+    const color = document.getElementById('colorInput').value || selectedColor;
+    
+    const res = await fetch('/api/spin-wheel', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({occasion: selectedOccasion, color: color})
+    });
+    const data = await res.json();
+    showResult(data);
+}
+
+function showResult(data) {
+    const result = document.getElementById('wheelResult');
+    
+    if (data.outfit) {
+        const o = data.outfit;
+        result.innerHTML = `
+        <div class="result-card result-card--revealed">
+            <div class="result-card__header">
+                <div class="result-badge">${selectedOccasion ? '✦ ' + selectedOccasion.toUpperCase() : '✦ YOUR LOOK'}</div>
+                <div class="result-harmony">${o.harmony_type}</div>
+            </div>
+            <div class="result-outfit">
+                <div class="result-piece result-piece--top">
+                    <div class="result-piece__icon">👕</div>
+                    <div class="result-piece__info">
+                        <div class="result-piece__name">${o.top.name}</div>
+                        <div class="result-piece__meta">${o.top.category || 'Top'} ${o.top.color_rgb ? '· ' + o.top.color_rgb : ''}</div>
+                    </div>
+                </div>
+                <div class="result-plus">+</div>
+                <div class="result-piece result-piece--bottom">
+                    <div class="result-piece__icon">👖</div>
+                    <div class="result-piece__info">
+                        <div class="result-piece__name">${o.bottom.name}</div>
+                        <div class="result-piece__meta">${o.bottom.category || 'Bottom'} ${o.bottom.color_rgb ? '· ' + o.bottom.color_rgb : ''}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-scores">
+                <div class="result-score"><span>🎨</span><span>${o.color_harmony}% Color Match</span></div>
+                <div class="result-score"><span>🌡</span><span>${o.weather_score}% Weather Fit</span></div>
+            </div>
+            <div class="result-tip">${data.tip}</div>
+            <div class="result-actions">
+                <button class="btn-primary" onclick="saveResultOutfit(${o.top.item_id}, ${o.bottom.item_id})">Save Outfit</button>
+                <button class="btn-ghost" onclick="spinWheel()">Spin Again</button>
+            </div>
+        </div>`;
+    } else if (data.generic) {
+        const g = data.generic;
+        result.innerHTML = `
+        <div class="result-card result-card--revealed result-card--generic">
+            <div class="result-badge">✦ SUGGESTED LOOK</div>
+            <p class="result-generic-note">Add items to your wardrobe for personalized picks. Here's what we'd suggest:</p>
+            <div class="result-outfit">
+                <div class="result-piece result-piece--top">
+                    <div class="result-piece__icon">👕</div>
+                    <div class="result-piece__info">
+                        <div class="result-piece__name">${g.top}</div>
+                    </div>
+                </div>
+                <div class="result-plus">+</div>
+                <div class="result-piece result-piece--bottom">
+                    <div class="result-piece__icon">👖</div>
+                    <div class="result-piece__info">
+                        <div class="result-piece__name">${g.bottom}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-tip">${g.tip}</div>
+            <a href="/wardrobe" class="btn-primary" style="display:inline-block;margin-top:12px">Build Your Wardrobe →</a>
+        </div>`;
+    }
+}
+
+async function saveResultOutfit(topId, bottomId) {
+    await fetch('/api/save-outfit', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({items: [topId, bottomId]})
+    });
+    showToast('✓ Outfit saved!', 'success');
+}
+</script>
+{% endblock %}

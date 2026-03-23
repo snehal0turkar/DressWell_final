@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DressWell — Wear the Weather</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+</head>
+<body class="landing-body">
+
+<nav class="landing-nav">
+    <a href="/" class="brand-logo brand-logo--light">
+        <span class="brand-logo__icon">◈</span>
+        <span class="brand-logo__text">DressWell</span>
+    </a>
+    <a href="{{ url_for('auth') }}" class="btn-ghost">Enter →</a>
+</nav>
+
+<section class="hero">
+    <div class="hero__grain"></div>
+    <div class="hero__lines">
+        <div class="line line--1"></div>
+        <div class="line line--2"></div>
+        <div class="line line--3"></div>
+    </div>
+
+    <div class="hero__content">
+        <p class="hero__eyebrow" data-anim="fadeUp" data-delay="0">AI-Powered Fashion Intelligence</p>
+        <h1 class="hero__title" data-anim="fadeUp" data-delay="1">
+            Dress for the<br>
+            <em>moment.</em>
+        </h1>
+        <p class="hero__subtitle" data-anim="fadeUp" data-delay="2">
+            DressWell reads your wardrobe, the weather, and your day — then builds the perfect outfit. Smart, personal, effortless.
+        </p>
+        <div class="hero__cta" data-anim="fadeUp" data-delay="3">
+            <a href="{{ url_for('auth') }}?tab=register" class="btn-primary">Start for free</a>
+            <a href="{{ url_for('auth') }}" class="btn-text">Sign in →</a>
+        </div>
+    </div>
+
+    <div class="hero__float-cards">
+        <div class="float-card float-card--1" data-anim="slideIn" data-delay="4">
+            <div class="float-card__label">Today's Weather</div>
+            <div class="float-card__value">24°C ☀</div>
+            <div class="float-card__sub">Mumbai · Clear</div>
+        </div>
+        <div class="float-card float-card--2" data-anim="slideIn" data-delay="5">
+            <div class="float-card__label">Color Harmony</div>
+            <div class="float-card__value">95%</div>
+            <div class="float-card__sub">Complementary</div>
+        </div>
+        <div class="float-card float-card--3" data-anim="slideIn" data-delay="6">
+            <div class="float-card__label">Outfit Match</div>
+            <div class="float-card__dots">
+                <span class="dot dot--navy"></span>
+                <span class="dot dot--white"></span>
+                <span class="dot dot--beige"></span>
+            </div>
+            <div class="float-card__sub">Perfect pair</div>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="features__grid">
+        <div class="feature-card" data-anim="fadeUp">
+            <div class="feature-card__num">01</div>
+            <h3>Weather-Smart</h3>
+            <p>Real-time temperature and conditions shape every recommendation. Stay comfortable, always.</p>
+        </div>
+        <div class="feature-card" data-anim="fadeUp" data-delay="1">
+            <div class="feature-card__num">02</div>
+            <h3>Color Science</h3>
+            <p>Built on real color theory — complementary, analogous, triadic. Every outfit pair is mathematically harmonious.</p>
+        </div>
+        <div class="feature-card" data-anim="fadeUp" data-delay="2">
+            <div class="feature-card__num">03</div>
+            <h3>Outfit Wheel</h3>
+            <p>Confused? Spin the wheel. Tell us the occasion and vibe — we'll pick the perfect outfit from your own wardrobe.</p>
+        </div>
+    </div>
+</section>
+
+<footer class="landing-footer">
+    <p>© 2024 DressWell · Built for the final year, designed for the real world.</p>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const els = document.querySelectorAll('[data-anim]');
+    els.forEach(el => {
+        const delay = parseFloat(el.dataset.delay || 0) * 0.12;
+        el.style.animationDelay = delay + 's';
+        el.classList.add('anim-ready');
+    });
+    setTimeout(() => els.forEach(el => el.classList.add('anim-go')), 100);
+});
+</script>
+</body>
+</html>

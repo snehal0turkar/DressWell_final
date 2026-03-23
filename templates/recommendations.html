@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Outfit Recommendations — DressWell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Curated for you</p>
+        <h1 class="page-title">Outfit Picks</h1>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <form method="GET" action="{{ url_for('recommendations') }}" class="filter-form">
+        <div class="filter-group">
+            <label class="filter-label">Occasion</label>
+            <select name="occasion" class="form-input form-select form-select--sm">
+                <option value="">All occasions</option>
+                {% for occ in ['casual','office','party','date','gym','wedding','travel','beach','traditional'] %}
+                <option value="{{ occ }}" {% if occasion == occ %}selected{% endif %}>{{ occ.title() }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Preferred Color</label>
+            <input type="text" name="color" class="form-input form-input--sm" placeholder="e.g. navy" value="{{ color or '' }}">
+        </div>
+        <button type="submit" class="btn-primary btn-sm-h">Filter</button>
+        <a href="{{ url_for('recommendations') }}" class="btn-ghost btn-sm-h">Clear</a>
+    </form>
+    {% if weather %}
+    <div class="filter-weather">
+        <span>🌡 {{ weather.temp }}°C · {{ weather.city }}</span>
+        <span class="filter-weather__desc">{{ weather.description }}</span>
+    </div>
+    {% endif %}
+</div>
+
+{% if outfits %}
+<div class="rec-grid">
+    {% for outfit in outfits %}
+    {% set oid = outfit.top.item_id|string + '_' + outfit.bottom.item_id|string %}
+    <div class="rec-card {% if outfit.is_clash %}rec-card--clash{% endif %}"
+         data-anim style="--delay:{{ loop.index0 * 0.07 }}s" id="ocard-{{ oid }}">
+
+        <div class="rec-card__photos">
+            <div class="rec-photo rec-photo--top">
+                {% if outfit.top.image_path %}<img src="{{ url_for('static', filename=outfit.top.image_path) }}" alt="{{ outfit.top.name }}" loading="lazy">
+                {% else %}<div class="rec-photo__placeholder">👕</div>{% endif %}
+                <div class="rec-photo__label">Top</div>
+                {% if outfit.top.color_palette %}{% set tp = outfit.top.color_palette | fromjson %}
+                <div class="rec-palette-strip">{% for c in tp[:4] %}<div style="background:{{ c.hex }};flex:{{ c.percentage }}" title="{{ c.name }}"></div>{% endfor %}</div>{% endif %}
+            </div>
+            <div class="rec-photos__divider">
+                <div class="rec-score-bubble {% if outfit.is_clash %}rec-score-bubble--clash{% endif %}">{{ outfit.color_harmony }}%</div>
+                <div class="rec-score-label">match</div>
+            </div>
+            <div class="rec-photo rec-photo--bottom">
+                {% if outfit.bottom.image_path %}<img src="{{ url_for('static', filename=outfit.bottom.image_path) }}" alt="{{ outfit.bottom.name }}" loading="lazy">
+                {% else %}<div class="rec-photo__placeholder">👖</div>{% endif %}
+                <div class="rec-photo__label">Bottom</div>
+                {% if outfit.bottom.color_palette %}{% set bp = outfit.bottom.color_palette | fromjson %}
+                <div class="rec-palette-strip">{% for c in bp[:4] %}<div style="background:{{ c.hex }};flex:{{ c.percentage }}" title="{{ c.name }}"></div>{% endfor %}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="rec-card__info">
+            <div class="rec-card__names">
+                <span class="rec-name">{{ outfit.top.name }}</span>
+                <span class="rec-plus">+</span>
+                <span class="rec-name">{{ outfit.bottom.name }}</span>
+            </div>
+            <div class="rec-harmony-row">
+                <div class="rec-harmony-badge {% if outfit.is_clash %}rec-harmony-badge--clash{% endif %}">{{ outfit.harmony_type }}</div>
+                {% if outfit.harmony_reason %}<span class="rec-harmony-reason">{{ outfit.harmony_reason }}</span>{% endif %}
+            </div>
+            {% if outfit.is_clash %}<div class="clash-warning">⚠ Colour clash — these tones may not pair well</div>{% endif %}
+            <div class="rec-score-bars">
+                <div class="score-row">
+                    <span class="score-label">Color</span>
+                    <div class="score-track"><div class="{{ 'score-fill score-fill--great' if outfit.color_harmony >= 80 else ('score-fill score-fill--good' if outfit.color_harmony >= 60 else ('score-fill score-fill--mid' if outfit.color_harmony >= 40 else 'score-fill score-fill--low')) }}" style="width:{{ outfit.color_harmony }}%"></div></div>
+                    <span class="score-val {{ 'score-val--great' if outfit.color_harmony >= 80 else ('score-val--good' if outfit.color_harmony >= 60 else ('score-val--mid' if outfit.color_harmony >= 40 else 'score-val--low')) }}">{{ outfit.color_harmony }}%</span>
+                </div>
+                <div class="score-row">
+                    <span class="score-label">Weather {% if outfit.weather_score == 50 %}<span class="score-hint" title="Add temp range to items for accurate weather score">?</span>{% endif %}</span>
+                    <div class="score-track"><div class="{{ 'score-fill score-fill--great' if outfit.weather_score >= 80 else ('score-fill score-fill--good' if outfit.weather_score >= 60 else ('score-fill score-fill--mid' if outfit.weather_score >= 40 else 'score-fill score-fill--low')) }}" style="width:{{ outfit.weather_score }}%"></div></div>
+                    <span class="score-val {{ 'score-val--great' if outfit.weather_score >= 80 else ('score-val--good' if outfit.weather_score >= 60 else ('score-val--mid' if outfit.weather_score >= 40 else 'score-val--low')) }}">{{ outfit.weather_score }}%</span>
+                </div>
+                <div class="score-row">
+                    <span class="score-label">Occasion {% if not request.args.get('occasion') %}<span class="score-hint" title="Filter by occasion for specific score">?</span>{% endif %}</span>
+                    <div class="score-track"><div class="{{ 'score-fill score-fill--great' if outfit.occasion_match >= 80 else ('score-fill score-fill--good' if outfit.occasion_match >= 60 else ('score-fill score-fill--mid' if outfit.occasion_match >= 40 else 'score-fill score-fill--low')) }}" style="width:{{ outfit.occasion_match }}%"></div></div>
+                    <span class="score-val {{ 'score-val--great' if outfit.occasion_match >= 80 else ('score-val--good' if outfit.occasion_match >= 60 else ('score-val--mid' if outfit.occasion_match >= 40 else 'score-val--low')) }}">{{ outfit.occasion_match }}%</span>
+                </div>
+                {% if outfit.skin_tone_active and outfit.skin_score is not none %}
+                <div class="score-row">
+                    <span class="score-label">Skin Tone</span>
+                    <div class="score-track"><div class="{{ 'score-fill score-fill--great' if outfit.skin_score >= 80 else ('score-fill score-fill--good' if outfit.skin_score >= 60 else 'score-fill score-fill--mid') }}" style="width:{{ outfit.skin_score }}%"></div></div>
+                    <span class="score-val {{ 'score-val--great' if outfit.skin_score >= 80 else ('score-val--good' if outfit.skin_score >= 60 else 'score-val--mid') }}">{{ outfit.skin_score }}%</span>
+                </div>
+                {% elif not outfit.skin_tone_active %}
+                <div class="score-row skin-row-hint">
+                    <span class="score-label">Skin Tone</span>
+                    <a href="{{ url_for('camera_scan') }}" class="skin-scan-nudge">Scan to personalise →</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- THUMB BUTTONS + HEART -->
+            <div class="outfit-feedback-row">
+                <div class="thumb-group">
+                    <button class="thumb-btn thumb-btn--up" id="up-{{ oid }}"
+                        onclick="vote('{{ oid }}',{{ outfit.top.item_id }},{{ outfit.bottom.item_id }},'like','{{ outfit.harmony_type }}')"
+                        title="Great outfit!">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91l-.01-.01L23 10z"/></svg>
+                        <span class="thumb-label">Like</span>
+                    </button>
+                    <div class="thumb-sep"></div>
+                    <button class="thumb-btn thumb-btn--down" id="dn-{{ oid }}"
+                        onclick="vote('{{ oid }}',{{ outfit.top.item_id }},{{ outfit.bottom.item_id }},'dislike','{{ outfit.harmony_type }}')"
+                        title="Not for me">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v1.91l.01.01L1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+                    </button>
+                </div>
+                <button class="heart-btn {% if outfit.is_favourite %}heart-btn--active{% endif %}"
+                    id="heart-{{ oid }}"
+                    onclick="toggleHeart('{{ oid }}',{{ outfit.top.item_id }},{{ outfit.bottom.item_id }})">
+                    <svg viewBox="0 0 24 24" width="17" height="17"
+                         fill="{% if outfit.is_favourite %}currentColor{% else %}none{% endif %}"
+                         stroke="currentColor" stroke-width="2" id="heart-icon-{{ oid }}">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    <span id="heart-label-{{ oid }}">{% if outfit.is_favourite %}Saved{% else %}Save{% endif %}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state empty-state--center">
+    <div class="empty-state__icon">✨</div>
+    <h3>No outfits to show</h3>
+    <p>Add both tops and bottoms to your wardrobe to see recommendations.</p>
+    <a href="{{ url_for('wardrobe') }}" class="btn-primary">Go to Wardrobe →</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const voteState = {};
+
+async function vote(oid, topId, botId, type, harmonyType) {
+    const up = document.getElementById('up-' + oid);
+    const dn = document.getElementById('dn-' + oid);
+    if (voteState[oid] === type) {
+        up.classList.remove('thumb-btn--voted');
+        dn.classList.remove('thumb-btn--voted');
+        delete voteState[oid];
+        return;
+    }
+    up.classList.remove('thumb-btn--voted');
+    dn.classList.remove('thumb-btn--voted');
+    (type === 'like' ? up : dn).classList.add('thumb-btn--voted');
+    voteState[oid] = type;
+
+    const res  = await fetch('/api/feedback', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({top_id:topId, bottom_id:botId, feedback_type:type, harmony_type:harmonyType})
+    });
+    const data = await res.json();
+    if (data.success) showToast(data.message, 'success');
+}
+
+async function toggleHeart(oid, topId, botId) {
+    const res  = await fetch('/api/toggle-favourite', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({top_id:topId, bottom_id:botId})
+    });
+    const data = await res.json();
+    if (!data.success) return;
+    const btn   = document.getElementById('heart-' + oid);
+    const icon  = document.getElementById('heart-icon-' + oid);
+    const label = document.getElementById('heart-label-' + oid);
+    if (data.favourited) {
+        btn.classList.add('heart-btn--active');
+        icon.setAttribute('fill','currentColor');
+        label.textContent = 'Saved';
+    } else {
+        btn.classList.remove('heart-btn--active');
+        icon.setAttribute('fill','none');
+        label.textContent = 'Save';
+    }
+    showToast(data.message, 'success');
+}
+
+const obs = new IntersectionObserver(e => e.forEach(en => { if(en.isIntersecting) en.target.classList.add('in-view'); }), {threshold:0.08});
+document.querySelectorAll('[data-anim]').forEach(el => obs.observe(el));
+</script>
+{% endblock %}

@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block title %}My Wardrobe — DressWell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Your collection</p>
+        <h1 class="page-title">Wardrobe</h1>
+    </div>
+    <button class="btn-primary" onclick="openAddModal()">+ Add Item</button>
+</div>
+
+<div class="wardrobe-tabs">
+    <button class="w-tab w-tab--active" id="wtab-top" onclick="switchWardrobeTab('top')">
+        <span>👕</span> Tops <span class="w-tab__count">{{ tops|length }}</span>
+    </button>
+    <button class="w-tab" id="wtab-bottom" onclick="switchWardrobeTab('bottom')">
+        <span>👖</span> Bottoms <span class="w-tab__count">{{ bottoms|length }}</span>
+    </button>
+</div>
+
+<!-- TOPS -->
+<div id="section-top" class="wardrobe-section">
+    {% if tops %}
+    <div class="clothes-grid">
+        {% for item in tops %}
+        <div class="clothes-card" data-anim style="--delay:{{ loop.index0 * 0.05 }}s">
+            {% if item.image_path %}
+            <div class="clothes-card__photo">
+                <img src="{{ url_for('static', filename=item.image_path) }}" alt="{{ item.name }}" loading="lazy">
+                {% if item.color_palette %}
+                {% set palette = item.color_palette | fromjson %}
+                <div class="palette-strip">
+                    {% for c in palette[:5] %}
+                    <div class="palette-swatch" style="background:{{ c.hex }};flex:{{ c.percentage }}"
+                         title="{{ c.name }} {{ c.percentage }}%"></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="clothes-card__no-photo">
+                <span>👕</span>
+                <span class="no-photo-label">No photo</span>
+            </div>
+            {% endif %}
+            <div class="clothes-card__body">
+                <div class="clothes-card__name">{{ item.name }}</div>
+                <div class="clothes-card__meta">
+                    {% if item.category %}<span class="tag">{{ item.category }}</span>{% endif %}
+                    {% if item.color_rgb %}<span class="tag tag--color">
+                        <span class="tag-dot" style="background:{{ item.color_rgb | csscolor }}"></span>{{ item.color_rgb }}
+                    </span>{% endif %}
+                    {% if item.occasions %}{% for occ in item.occasions.split(',')[:2] %}
+                    <span class="tag tag--occasion">{{ occ.strip() }}</span>{% endfor %}{% endif %}
+                </div>
+                {% if item.temp_min is not none and item.temp_max is not none %}
+                <div class="clothes-card__temp">🌡 {{ item.temp_min }}–{{ item.temp_max }}°C</div>
+                {% endif %}
+            </div>
+            <div class="clothes-card__footer">
+                <button class="btn-delete" onclick="deleteItem({{ item.item_id }}, this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"/></svg>
+                    Remove
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="clothes-card clothes-card--add" onclick="openAddModal('top')">
+            <div class="add-card-inner"><span class="add-icon">+</span><span>Add Top</span></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state__icon">👕</div>
+        <h3>No tops yet</h3>
+        <p>Add your first top — upload a photo for colour analysis.</p>
+        <button class="btn-primary" onclick="openAddModal('top')">Add a Top</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- BOTTOMS -->
+<div id="section-bottom" class="wardrobe-section wardrobe-section--hidden">
+    {% if bottoms %}
+    <div class="clothes-grid">
+        {% for item in bottoms %}
+        <div class="clothes-card" data-anim style="--delay:{{ loop.index0 * 0.05 }}s">
+            {% if item.image_path %}
+            <div class="clothes-card__photo">
+                <img src="{{ url_for('static', filename=item.image_path) }}" alt="{{ item.name }}" loading="lazy">
+                {% if item.color_palette %}
+                {% set palette = item.color_palette | fromjson %}
+                <div class="palette-strip">
+                    {% for c in palette[:5] %}
+                    <div class="palette-swatch" style="background:{{ c.hex }};flex:{{ c.percentage }}"
+                         title="{{ c.name }} {{ c.percentage }}%"></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="clothes-card__no-photo">
+                <span>👖</span>
+                <span class="no-photo-label">No photo</span>
+            </div>
+            {% endif %}
+            <div class="clothes-card__body">
+                <div class="clothes-card__name">{{ item.name }}</div>
+                <div class="clothes-card__meta">
+                    {% if item.category %}<span class="tag">{{ item.category }}</span>{% endif %}
+                    {% if item.color_rgb %}<span class="tag tag--color">
+                        <span class="tag-dot" style="background:{{ item.color_rgb | csscolor }}"></span>{{ item.color_rgb }}
+                    </span>{% endif %}
+                    {% if item.occasions %}{% for occ in item.occasions.split(',')[:2] %}
+                    <span class="tag tag--occasion">{{ occ.strip() }}</span>{% endfor %}{% endif %}
+                </div>
+                {% if item.temp_min is not none and item.temp_max is not none %}
+                <div class="clothes-card__temp">🌡 {{ item.temp_min }}–{{ item.temp_max }}°C</div>
+                {% endif %}
+            </div>
+            <div class="clothes-card__footer">
+                <button class="btn-delete" onclick="deleteItem({{ item.item_id }}, this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"/></svg>
+                    Remove
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="clothes-card clothes-card--add" onclick="openAddModal('bottom')">
+            <div class="add-card-inner"><span class="add-icon">+</span><span>Add Bottom</span></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state__icon">👖</div>
+        <h3>No bottoms yet</h3>
+        <p>Add jeans, trousers, skirts — upload a photo for color analysis.</p>
+        <button class="btn-primary" onclick="openAddModal('bottom')">Add a Bottom</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="modal__title">Add to Wardrobe</h2>
+            <button class="modal__close" onclick="closeModal()">✕</button>
+        </div>
+        <form id="addItemForm" onsubmit="submitAddItem(event)" enctype="multipart/form-data">
+            <div class="modal__body">
+
+                <div class="wear-type-picker">
+                    <label class="wear-option">
+                        <input type="radio" name="wear_type" value="top" id="wtype-top" checked>
+                        <span class="wear-btn">👕 Top</span>
+                    </label>
+                    <label class="wear-option">
+                        <input type="radio" name="wear_type" value="bottom" id="wtype-bottom">
+                        <span class="wear-btn">👖 Bottom</span>
+                    </label>
+                </div>
+
+                <!-- PHOTO UPLOAD -->
+                <div class="form-group">
+                    <label class="form-label">Photo <span class="form-hint">(optional — used for color analysis)</span></label>
+                    <div class="photo-upload-zone" id="photoZone" onclick="document.getElementById('photoInput').click()">
+                        <div class="photo-upload-zone__idle" id="photoIdle">
+                            <div class="photo-upload-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                            </div>
+                            <p>Click to upload or drag & drop</p>
+                            <span class="photo-upload-hint">JPG, PNG, WEBP up to 10MB</span>
+                        </div>
+                        <div class="photo-upload-zone__preview" id="photoPreview" style="display:none">
+                            <img id="photoPreviewImg" src="" alt="Preview">
+                            <div class="photo-preview-overlay">
+                                <span>Change photo</span>
+                            </div>
+                            <div class="palette-preview" id="palettePreview"></div>
+                        </div>
+                    </div>
+                    <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none" onchange="handlePhotoSelect(this)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Item Name *</label>
+                    <input type="text" name="name" class="form-input" placeholder="e.g. White Linen Shirt" required>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select name="category" class="form-input form-select" id="categorySelect">
+                            <option value="">Select…</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Color <span class="form-hint">(auto from photo)</span></label>
+                        <div style="position:relative">
+                            <span id="colorAutoIcon" style="display:none;position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.2)"></span>
+                            <input type="text" name="color" id="colorInput" class="form-input" placeholder="e.g. navy, white" list="colorList" style="padding-left:34px">
+                        </div>
+                        <datalist id="colorList">
+                            <option value="black"><option value="white"><option value="navy"><option value="grey">
+                            <option value="beige"><option value="red"><option value="blue"><option value="green">
+                            <option value="yellow"><option value="pink"><option value="orange"><option value="purple">
+                            <option value="brown"><option value="maroon"><option value="olive"><option value="teal">
+                            <option value="coral"><option value="lavender"><option value="cream"><option value="charcoal">
+                        </datalist>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Occasions</label>
+                    <input type="text" name="occasions" id="occasionsInput" class="form-input" placeholder="casual, office, party">
+                    <div class="occasion-chips">
+                        {% for occ in ['casual','office','party','date','gym','wedding','travel','beach','traditional'] %}
+                        <button type="button" class="occ-chip" onclick="addOccasion('{{ occ }}')">{{ occ }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Temperature Range</label>
+                    <div class="form-grid-2">
+                        <input type="number" name="temp_min" class="form-input" placeholder="Min °C">
+                        <input type="number" name="temp_max" class="form-input" placeholder="Max °C">
+                    </div>
+                    <p class="form-hint-text">Helps weather-based recommendations</p>
+                </div>
+
+            </div>
+            <div class="modal__footer">
+                <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary" id="submitBtn">Add to Wardrobe</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const topCats    = ['T-Shirt','Shirt','Polo','Sweatshirt','Hoodie','Blazer','Jacket','Coat','Kurta','Tank Top','Blouse','Crop Top','Vest','Sherwani','Dress'];
+const bottomCats = ['Jeans','Trousers','Chinos','Shorts','Skirt','Leggings','Track Pants','Joggers','Dhoti','Palazzos','Mini Skirt'];
+
+function switchWardrobeTab(type) {
+    document.querySelectorAll('.w-tab').forEach(t => t.classList.remove('w-tab--active'));
+    document.querySelectorAll('.wardrobe-section').forEach(s => s.classList.add('wardrobe-section--hidden'));
+    document.getElementById('wtab-' + type).classList.add('w-tab--active');
+    document.getElementById('section-' + type).classList.remove('wardrobe-section--hidden');
+}
+
+function openAddModal(type) {
+    document.getElementById('addModal').classList.add('modal-overlay--active');
+    if (type === 'bottom') document.getElementById('wtype-bottom').checked = true;
+    else document.getElementById('wtype-top').checked = true;
+    updateCategorySelect();
+}
+function closeModal() {
+    document.getElementById('addModal').classList.remove('modal-overlay--active');
+    document.getElementById('addItemForm').reset();
+    resetPhotoPreview();
+}
+document.querySelectorAll('input[name="wear_type"]').forEach(r => r.addEventListener('change', updateCategorySelect));
+function updateCategorySelect() {
+    const type = document.querySelector('input[name="wear_type"]:checked').value;
+    const sel  = document.getElementById('categorySelect');
+    const cats = type === 'top' ? topCats : bottomCats;
+    sel.innerHTML = '<option value="">Select…</option>' + cats.map(c => `<option>${c}</option>`).join('');
+}
+updateCategorySelect();
+
+function addOccasion(occ) {
+    const inp = document.getElementById('occasionsInput');
+    const arr = inp.value ? inp.value.split(',').map(s=>s.trim()) : [];
+    if (!arr.includes(occ)) inp.value = [...arr, occ].join(', ');
+}
+
+// ─── Photo preview (client-side only, no upload yet) ──────────────────────
+function handlePhotoSelect(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('photoIdle').style.display = 'none';
+        const preview = document.getElementById('photoPreview');
+        preview.style.display = 'flex';
+        document.getElementById('photoPreviewImg').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function resetPhotoPreview() {
+    document.getElementById('photoIdle').style.display = '';
+    document.getElementById('photoPreview').style.display = 'none';
+    document.getElementById('photoPreviewImg').src = '';
+    document.getElementById('palettePreview').innerHTML = '';
+    document.getElementById('colorAutoIcon').style.display = 'none';
+    document.getElementById('colorInput').style.paddingLeft = '';
+}
+
+// Drag & drop
+const zone = document.getElementById('photoZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('photo-upload-zone--drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('photo-upload-zone--drag'));
+zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('photo-upload-zone--drag');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const input = document.getElementById('photoInput');
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        handlePhotoSelect(input);
+    }
+});
+
+// ─── Submit ───────────────────────────────────────────────────────────────
+async function submitAddItem(e) {
+    e.preventDefault();
+    const btn  = document.getElementById('submitBtn');
+    btn.textContent = 'Analysing…';
+    btn.disabled = true;
+
+    const formData = new FormData(e.target);
+    const res  = await fetch('/wardrobe/add', {method:'POST', body: formData});
+    const data = await res.json();
+
+    btn.textContent = 'Add to Wardrobe';
+    btn.disabled = false;
+
+    if (data.success) {
+        // If palette was returned, show it briefly before reload
+        if (data.palette && data.palette.length) {
+            const pal = document.getElementById('palettePreview');
+            pal.innerHTML = data.palette.map(c =>
+                `<div class="palette-swatch-sm" style="background:${c.hex}" title="${c.name} ${c.percentage}%"></div>`
+            ).join('');
+            const icon = document.getElementById('colorAutoIcon');
+            icon.style.background = data.palette[0].hex;
+            icon.style.display = 'block';
+            document.getElementById('colorInput').style.paddingLeft = '34px';
+        }
+        showToast('✓ ' + data.message + (data.palette?.length ? ' Colors extracted!' : ''), 'success');
+        closeModal();
+        setTimeout(() => location.reload(), 900);
+    } else {
+        showToast(data.error || 'Something went wrong', 'error');
+    }
+}
+
+async function deleteItem(itemId, btn) {
+    if (!confirm('Remove this item?')) return;
+    const res  = await fetch('/wardrobe/delete/' + itemId, {method:'POST'});
+    const data = await res.json();
+    if (data.success) {
+        const card = btn.closest('.clothes-card');
+        card.style.transition = 'opacity .3s, transform .3s';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => card.remove(), 300);
+        showToast('Item removed', 'success');
+    }
+}
+
+// Anim observer
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+}, {threshold:0.08});
+document.querySelectorAll('[data-anim]').forEach(el => obs.observe(el));
+
+document.getElementById('addModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+});
+</script>
+{% endblock %}

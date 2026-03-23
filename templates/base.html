@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}DressWell{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="toast-container">
+                {% for category, message in messages %}
+                <div class="toast toast--{{ category }}">
+                    <span class="toast-icon">{% if category == 'success' %}✓{% elif category == 'error' %}✕{% else %}ℹ{% endif %}</span>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block nav %}
+    <nav class="sidenav" id="sidenav">
+        <div class="sidenav__brand">
+            <a href="{{ url_for('dashboard') }}" class="brand-logo">
+                <span class="brand-logo__icon">◈</span>
+                <span class="brand-logo__text">DressWell</span>
+            </a>
+        </div>
+
+        <div class="sidenav__user">
+            <div class="user-avatar">{{ session.username[0].upper() if session.username else 'U' }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ session.username }}</span>
+                <span class="user-city">{{ session.city or 'Set your city' }}</span>
+            </div>
+        </div>
+
+        <ul class="sidenav__links">
+            <li><a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}nav-link--active{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </a></li>
+            <li><a href="{{ url_for('wardrobe') }}" class="nav-link {% if request.endpoint == 'wardrobe' %}nav-link--active{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+                My Wardrobe
+            </a></li>
+            <li><a href="{{ url_for('recommendations') }}" class="nav-link {% if request.endpoint == 'recommendations' %}nav-link--active{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Outfits
+            </a></li>
+            <li><a href="{{ url_for('outfit_wheel') }}" class="nav-link {% if request.endpoint == 'outfit_wheel' %}nav-link--active{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+                Outfit Wheel
+            </a></li>
+            <li><a href="{{ url_for('favourites') }}" class="nav-link {% if request.endpoint == 'favourites' %}nav-link--active{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                My Favourites
+            </a></li>
+            <li><a href="{{ url_for('camera_scan') }}" class="nav-link {% if request.endpoint == 'camera_scan' %}nav-link--active{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Skin Tone Scanner
+            </a></li>
+        </ul>
+
+        <div class="sidenav__bottom">
+            <a href="{{ url_for('logout') }}" class="nav-link nav-link--logout">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+            </a>
+        </div>
+    </nav>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+    </button>
+    {% endblock %}
+
+    <main class="main-content {% if not session.user_id %}main-content--full{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

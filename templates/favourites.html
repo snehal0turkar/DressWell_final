@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}My Favourites — DressWell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Your saved looks</p>
+        <h1 class="page-title">My Favourites <span style="color:var(--gold)">♥</span></h1>
+    </div>
+    <a href="{{ url_for('recommendations') }}" class="btn-ghost">Browse Outfits →</a>
+</div>
+
+{% if outfits %}
+<p class="fav-count">{{ outfits|length }} saved outfit{{ 's' if outfits|length != 1 }}</p>
+
+<div class="rec-grid">
+    {% for outfit in outfits %}
+    <div class="rec-card fav-card" data-anim style="--delay:{{ loop.index0 * 0.07 }}s"
+         id="fav-card-{{ outfit.favourite_id }}">
+
+        <div class="rec-card__photos">
+            <div class="rec-photo rec-photo--top">
+                {% if outfit.top.image_path %}
+                <img src="{{ url_for('static', filename=outfit.top.image_path) }}" alt="{{ outfit.top.name }}" loading="lazy">
+                {% else %}
+                <div class="rec-photo__placeholder">👕</div>
+                {% endif %}
+                <div class="rec-photo__label">Top</div>
+                {% if outfit.top.color_palette %}
+                {% set tp = outfit.top.color_palette | fromjson %}
+                <div class="rec-palette-strip">{% for c in tp[:4] %}<div style="background:{{ c.hex }};flex:{{ c.percentage }}"></div>{% endfor %}</div>
+                {% endif %}
+            </div>
+
+            <div class="rec-photos__divider">
+                <div class="rec-score-bubble">{{ outfit.color_harmony }}%</div>
+                <div class="rec-score-label">match</div>
+            </div>
+
+            <div class="rec-photo rec-photo--bottom">
+                {% if outfit.bottom.image_path %}
+                <img src="{{ url_for('static', filename=outfit.bottom.image_path) }}" alt="{{ outfit.bottom.name }}" loading="lazy">
+                {% else %}
+                <div class="rec-photo__placeholder">👖</div>
+                {% endif %}
+                <div class="rec-photo__label">Bottom</div>
+                {% if outfit.bottom.color_palette %}
+                {% set bp = outfit.bottom.color_palette | fromjson %}
+                <div class="rec-palette-strip">{% for c in bp[:4] %}<div style="background:{{ c.hex }};flex:{{ c.percentage }}"></div>{% endfor %}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rec-card__info">
+            <div class="rec-card__names">
+                <span class="rec-name">{{ outfit.top.name }}</span>
+                <span class="rec-plus">+</span>
+                <span class="rec-name">{{ outfit.bottom.name }}</span>
+            </div>
+            <div class="rec-harmony-badge">{{ outfit.harmony_type }}</div>
+            <div class="fav-date">Saved {{ outfit.created_at[:10] if outfit.created_at else '' }}</div>
+
+            <div class="rec-card__actions">
+                <button class="btn-feedback btn-dislike"
+                    onclick="removeFavourite({{ outfit.favourite_id }}, this)">
+                    🗑 Remove
+                </button>
+                <a href="{{ url_for('recommendations') }}" class="btn-feedback">
+                    ✦ Find similar
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state empty-state--center">
+    <div class="empty-state__icon" style="font-size:56px">♡</div>
+    <h3>No favourites yet</h3>
+    <p>Heart an outfit from the Outfits page and it'll appear here for quick access.</p>
+    <a href="{{ url_for('recommendations') }}" class="btn-primary">Browse Outfits →</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function removeFavourite(favId, btn) {
+    if (!confirm('Remove from favourites?')) return;
+    const res  = await fetch('/api/remove-favourite/' + favId, {method:'POST'});
+    const data = await res.json();
+    if (data.success) {
+        const card = document.getElementById('fav-card-' + favId);
+        card.style.transition = 'opacity .35s, transform .35s';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.92)';
+        setTimeout(() => {
+            card.remove();
+            const remaining = document.querySelectorAll('.fav-card').length;
+            const cnt = document.querySelector('.fav-count');
+            if (cnt) cnt.textContent = remaining + ' saved outfit' + (remaining !== 1 ? 's' : '');
+            if (remaining === 0) location.reload();
+        }, 350);
+        showToast('Removed from favourites', 'success');
+    }
+}
+
+const obs = new IntersectionObserver(entries =>
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); }),
+    {threshold: 0.08});
+document.querySelectorAll('[data-anim]').forEach(el => obs.observe(el));
+</script>
+{% endblock %}
