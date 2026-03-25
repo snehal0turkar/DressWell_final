@@ -9,6 +9,9 @@ import uuid
 from datetime import datetime
 from functools import wraps
 from PIL import Image
+from zoneinfo import ZoneInfo
+IST = ZoneInfo('Asia/Kolkata')
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -726,7 +729,7 @@ def dashboard():
     return render_template('dashboard.html',
         weather=w, outfit_tip=outfit_tip(w),
         recommendations=recs, tops_count=tc, bottoms_count=bc, favourites_count=fc,
-        recent_items=recent, now_hour=datetime.now().hour,
+        recent_items=recent, now_hour=datetime.now(tz=IST).hour,
         skin_tone=skin_tone, tone_meta=tone_meta)
 
 @app.route('/wardrobe')
